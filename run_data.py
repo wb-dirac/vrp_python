@@ -19,20 +19,13 @@ def get_orders(filename, date):
 
 
 def write_csv(filename, rows):
-    # headers = ['Symbol','Price','Date','Time','Change','Volume']
-    # rows = [('AA', 39.48, '6/11/2007', '9:36am', -0.18, 181800),
-    #          ('AIG', 71.38, '6/11/2007', '9:36am', -0.15, 195500),
-    #         ('AXP', 62.58, '6/11/2007', '9:36am', -0.46, 935000),
-    #         ]
-
     with open(filename,'at') as f:
         f_csv = csv.writer(f)
         f_csv.writerows(rows)
 
 
-if __name__ == '__main__':
-    date = '2015/10/01'
-    car_list = get_orders('./resource/order_data/order2.csv', '2015/10/01')
+def run(filename, date):
+    car_list = get_orders(filename, '2015/10/01')
     # print(car_list)
     maxl = 0
     headers = [['日期', '用户ID', '经度', '纬度', '距离', '时间']]
@@ -62,3 +55,30 @@ if __name__ == '__main__':
                 write_csv(wf, data)
         # break
     print(maxl)
+
+if __name__ == '__main__':
+    date = '2015/10/01'
+    filename = './resource/order_data/order2.csv'
+    # run(date, filename)
+    car_list = {}
+    with open(filename) as f:
+        f_csv = csv.reader(f)
+        next(f_csv)
+        for row in f_csv:
+            if row[0] == date:
+                car_list[row[1]] = row[5]
+    headers = ['日期', '用户ID', '经度', '纬度', '车辆编号', '距离', '时间']
+    wf = './resource/order_data/result2.csv'
+    with open(wf, 'at') as f:
+        f_csv = csv.writer(f)
+        f_csv.writerow(headers)
+        with open('./resource/order_data/result.csv') as r1:
+            fr1_csv = csv.reader(r1)
+            next(fr1_csv)
+            for row in fr1_csv:
+                if len(row[1]) > 1:
+                    car_num = car_list[row[1]]
+                else:
+                    car_num = ''
+                row.insert(4, car_num)
+                f_csv.writerow(row)
