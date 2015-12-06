@@ -3,8 +3,20 @@ import json
 from urllib import request, parse
 
 
+def index():
+    date = '2015/10/01'
+    filename = './resource/order_data/order2.csv'
+    car_list = get_orders(filename, date)
+    return car_list
+
+
 def get_orders(filename, date):
-    "从文件中读取order"
+    """
+    从文件中读取order, 车辆编号为key的字典，value是order list
+    :param filename:
+    :param date:
+    :return:
+    """
     car_list = {}
     with open(filename) as f:
         f_csv = csv.reader(f)
@@ -19,25 +31,31 @@ def get_orders(filename, date):
 
 
 def write_csv(filename, rows):
-    with open(filename,'at') as f:
+    with open(filename, 'at') as f:
         f_csv = csv.writer(f)
         f_csv.writerows(rows)
 
 
-def run(filename, date):
+def path_rounting(filename, date, start):
+    """
+    根据某个订单文件中某天的分车结果计算起最优路径
+    :param filename:
+    :param date:
+    :return:
+    """
     car_list = get_orders(filename, '2015/10/01')
     # print(car_list)
     maxl = 0
-    headers = [['日期', '用户ID', '经度', '纬度', '距离', '时间']]
+    headers = [['日期', '用户ID', '经度', '纬度', '车辆编号', '距离', '时间']]
     wf = './resource/order_data/result.csv'
     write_csv(wf, headers)
     for car_num in car_list:
         maxl = max(maxl, len(car_list[car_num]))
-        car_list[car_num].insert(0, {'longitude': 116.212842, 'latitude': 39.898777, 'id': 'O'})
+        car_list[car_num].insert(0, start)
         print(car_num, "->", car_list[car_num])
         params = {"points": json.dumps(car_list[car_num]), "isBack": False}
         querystring = parse.urlencode(params)
-        url = "http://localhost:8080/allocat/getMinPath?" + querystring
+        url = "http://172.16.1.146:8086/order/allocat/getMinPath?" + querystring
         with request.urlopen(url) as resp:
             for line in resp:
                 line = line.decode('utf-8')  # Decoding the binary data to text.
@@ -48,37 +66,34 @@ def run(filename, date):
                 for row in json_data:
                     dis += row['distance']
                     time += row['time']
-                    line2 = [date, row['node']['id'], row['node']['longitude'], row['node']['latitude'], row['distance'],
+                    line2 = [date, row['node']['id'], row['node']['longitude'], row['node']['latitude'], car_num,
+                             row['distance'],
                              row['time']]
                     data.append(line2)
-                data.append(['本车合计', '', '', '', dis, time])
+                data.append(['本车合计', '', '', '', car_num, dis, time])
                 write_csv(wf, data)
         # break
     print(maxl)
 
-if __name__ == '__main__':
-    date = '2015/10/01'
-    filename = './resource/order_data/order2.csv'
-    # run(date, filename)
-    car_list = {}
+
+def calulate_sum_distance():
+    filename = './resource/order_data/result2.csv'
+    total = 0
+    car_count = 0
     with open(filename) as f:
         f_csv = csv.reader(f)
         next(f_csv)
         for row in f_csv:
-            if row[0] == date:
-                car_list[row[1]] = row[5]
-    headers = ['日期', '用户ID', '经度', '纬度', '车辆编号', '距离', '时间']
-    wf = './resource/order_data/result2.csv'
-    with open(wf, 'at') as f:
-        f_csv = csv.writer(f)
-        f_csv.writerow(headers)
-        with open('./resource/order_data/result.csv') as r1:
-            fr1_csv = csv.reader(r1)
-            next(fr1_csv)
-            for row in fr1_csv:
-                if len(row[1]) > 1:
-                    car_num = car_list[row[1]]
-                else:
-                    car_num = ''
-                row.insert(4, car_num)
-                f_csv.writerow(row)
+            if row[1] == '':
+                car_count += 1
+                total += int(row[5])
+    return {'distance': total, 'car_count': car_count}
+
+if __name__ == '__main__':
+    date = '2015/10/01'
+    filename = './resource/order_data/order2.csv'
+    start = {'longitude': 116.282381, 'latitude': 39.643378, 'id': 'O'}
+    # print(json.dumps(index()))
+    # path_rounting(filename, date, start)
+    tocal = calulate_sum_distance()
+    print(tocal)
