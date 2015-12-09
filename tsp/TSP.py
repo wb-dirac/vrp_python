@@ -14,6 +14,7 @@ import threading
 from GA import GA
 from Life import Life
 
+
 class MyTSP(object):
     "TSP"
 
@@ -23,6 +24,7 @@ class MyTSP(object):
         self.height = height
         self.n = n
         self.condition = 2000
+        self.distance_dict = {}
         self.canvas = Tkinter.Canvas(
             root,
             width=self.width,
@@ -60,11 +62,11 @@ class MyTSP(object):
         x, y = self.width / 2, self.height / 2
         self.start = (x, y)
         self.canvas.create_oval(x - self.__r,
-                                           y - self.__r, x + self.__r, y + self.__r,
-                                           fill="#00ff00",
-                                           outline="#000000",
-                                           tags="O",
-                                           )
+                                y - self.__r, x + self.__r, y + self.__r,
+                                fill="#00ff00",
+                                outline="#000000",
+                                tags="O",
+                                )
         for i in range(self.n):
             x = random.random() * (self.width - 60) + 30
             y = random.random() * (self.height - 60) + 30
@@ -78,7 +80,7 @@ class MyTSP(object):
             self.nodes2.append(node)
 
         self.ga = GA(
-            lifeCount=50,
+            lifeCount=160,
             mutationRate=0.05,
             judge=self.judge(),
             mkLife=self.mkLife(),
@@ -112,6 +114,7 @@ class MyTSP(object):
 
     def judge(self):
         "评估函数"
+
         def f(lf, av=100):
             lf.separate_indexs = []
             path = lf.gene
@@ -122,6 +125,9 @@ class MyTSP(object):
             one_distance = 0
             while i < path_len:
                 p2 = self.nodes[path[i]]
+                # if (p1, p2) not in self.distance_dict:
+                #     self.distance_dict[(p1, p2)] = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+                # distance = self.distance_dict[(p1, p2)]
                 distance = math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
                 if one_distance + distance > self.condition:
                     # 重置迭代变量
@@ -138,8 +144,10 @@ class MyTSP(object):
             lf.set_distance(total_distance)
             lf.separate_indexs.append(i)
             return 1 / (len(lf.separate_indexs) * 1600 + total_distance)
+
         # return lambda lf, av=100: 1.0 / self.distance(lf.gene)
         return f
+
     def xFunc(self):
         "交叉函数"
 
@@ -177,11 +185,11 @@ class MyTSP(object):
         self.__lock.acquire()
         self.__running = True
         self.__lock.release()
-
+        self.__start_time = time.time()
         while self.__running:
             self.ga.next()
             self.line(self.ga.best)
-            self.title("TSP - gen: %d" % self.ga.generation)
+            self.title("TSP - gen: %d, time: %d" % (self.ga.generation, time.time() - self.__start_time))
             self.canvas.update()
 
         self.__t = None
@@ -196,6 +204,7 @@ class MyTSP(object):
             p2 = self.nodes[i2]
             self.canvas.create_line(p1, p2, fill="#000000", tags="line")
             return i2
+
         start_number = 0
         for i in life.separate_indexs:
             reduce(line2, order[start_number:i], -1)
