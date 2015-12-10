@@ -1,6 +1,7 @@
 import csv
 import json
 from urllib import request, parse
+import random
 
 
 def index():
@@ -30,24 +31,40 @@ def get_orders(filename, date):
     return car_list
 
 
+def get_orders_from_group_api():
+    url = 'http://172.16.1.146:8086/order/allocat/groupOrder'
+    car_list = {}
+    with request.urlopen(url) as resp:
+        for line in resp:
+            line = line.decode('utf-8')  # Decoding the binary data to text.
+            json_data = json.loads(json.loads(line))
+            for car in json_data:
+                car_num = car['areaNum']
+                car_list[car_num] = []
+                orders = car['orders']
+                car_list[car_num] = [{'id': order['userId'], 'longitude': order['lngLats'][0],
+                                      'latitude': order['lngLats'][1]} for order in orders]
+    return car_list
+
+
 def write_csv(filename, rows):
     with open(filename, 'at') as f:
         f_csv = csv.writer(f)
         f_csv.writerows(rows)
 
 
-def path_rounting(filename, date, start):
+def path_rounting(car_list, date, start):
     """
     根据某个订单文件中某天的分车结果计算起最优路径
-    :param filename:
+    :param car_list:
     :param date:
     :return:
     """
-    car_list = get_orders(filename, '2015/10/01')
+
     # print(car_list)
     maxl = 0
     headers = [['日期', '用户ID', '经度', '纬度', '车辆编号', '距离', '时间']]
-    wf = './resource/order_data/result.csv'
+    wf = ''.join(['./resource/order_data/result', str(random.random()), ".csv"])
     write_csv(wf, headers)
     for car_num in car_list:
         maxl = max(maxl, len(car_list[car_num]))
@@ -94,6 +111,7 @@ if __name__ == '__main__':
     filename = './resource/order_data/order2.csv'
     start = {'longitude': 116.282381, 'latitude': 39.643378, 'id': 'O'}
     # print(json.dumps(index()))
-    # path_rounting(filename, date, start)
-    tocal = calulate_sum_distance()
-    print(tocal)
+    car_list = get_orders_from_group_api()
+    path_rounting(car_list, date, start)
+    # tocal = calulate_sum_distance()
+    # print(tocal)

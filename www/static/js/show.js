@@ -6,13 +6,13 @@ function renderSortedOrders(SortedOrders, map){
     for(var carNum in SortedOrders){
         var car = SortedOrders[carNum]
         var color = getRandomColor();
-        var sharp = getRandomSharp();
+        var shape = getRandomShape();
         for(var i in car) {
             var point = car[i]
             //设置marker图标为水滴
             var vectorMarker = new BMap.Marker(new BMap.Point(point.longitude, point.latitude), {
                 // 指定Marker的icon属性为Symbol
-                icon: new BMap.Symbol(sharp, {
+                icon: new BMap.Symbol(shape, {
                     scale: 1,//图标缩放大小
                     fillColor: color,//填充颜色
                     fillOpacity: 1//填充透明度
@@ -28,11 +28,12 @@ function getRandomColor(){
     return '#'+Math.floor(Math.random()*16777215).toString(16);
 }
 
-function getRandomSharp(){
+function getRandomShapeFunc(){
 
-    var sharps = [BMap_Symbol_SHAPE_STAR, BMap_Symbol_SHAPE_WARNING, BMap_Symbol_SHAPE_CLOCK, BMap_Symbol_SHAPE_POINT];
-    return sharps[Math.floor(Math.random() * sharps.length)];
+    var shapes = [BMap_Symbol_SHAPE_STAR, BMap_Symbol_SHAPE_WARNING, BMap_Symbol_SHAPE_CLOCK, BMap_Symbol_SHAPE_POINT];
+    return function (){return shapes[Math.floor(Math.random() * shapes.length)]};
 }
+getRandomShape = getRandomShapeFunc();
 
 function renadOrigin(point, map){
     var vectorMarker = new BMap.Marker(point, {
@@ -60,7 +61,7 @@ function renderPath(orderSet, cars, startPoint, map){
     for(var carNum in cars){
         var orders = cars[carNum]
         var color = getRandomColor();
-        var sharp = getRandomSharp();
+        var shape = getRandomShape();
         var points = [startPoint];
 
         for(var i in orders) {
@@ -71,7 +72,7 @@ function renderPath(orderSet, cars, startPoint, map){
             points.push(mapPoint);
             var vectorMarker = new BMap.Marker(mapPoint, {
                 // 指定Marker的icon属性为Symbol
-                icon: new BMap.Symbol(sharp, {
+                icon: new BMap.Symbol(shape, {
                     scale: 1,//图标缩放大小
                     fillColor: color,//填充颜色
                     fillOpacity: 1//填充透明度
@@ -80,8 +81,8 @@ function renderPath(orderSet, cars, startPoint, map){
 
             map.addOverlay(vectorMarker);
         }
-        var polyline = new BMap.Polyline(points, {strokeColor:color, strokeWeight:1, strokeOpacity:0.5});   //创建折线
-        map.addOverlay(polyline);
+        //var polyline = new BMap.Polyline(points, {strokeColor:color, strokeWeight:1, strokeOpacity:0.5});   //创建折线
+        //map.addOverlay(polyline);
     }
     console.log(count);
 }

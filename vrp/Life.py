@@ -12,12 +12,15 @@ class Life(object):
     env = None
     gene = ""
     score = 0
+    separate_indexs = []
+    distance = 0
 
     def __init__(self, env, gene=None):
         self.env = env
 
         if gene == None:
-            self.__rndGene()
+            # self.__rndGene()
+            pass
         elif type(gene) == type([]):
             self.gene = []
             for k in gene:
@@ -35,3 +38,6 @@ class Life(object):
 
     def addScore(self, v):
         self.score += v
+
+    def set_distance(self, v):
+        self.distance = v
